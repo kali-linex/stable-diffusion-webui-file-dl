@@ -11,7 +11,6 @@ def on_ui_tabs():
         download = gr.Button("Download")
         done = gr.Text()
         def download_file(url, out_file):
-            progress(0, "Starting download")
             r = requests.get(url, stream=True, timeout=10000)
             with open(os.path.join(paths.models_path, out_file), 'wb') as f:
                 for data in tqdm.tqdm(r.iter_content(1024)):
