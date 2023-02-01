@@ -17,5 +17,6 @@ def on_ui_tabs():
                     f.write(data)
             return "done"
         download.click(download_file, inputs=[url, out_file], outputs=[done])
+    return (downloader, "Downloader", "downloader")
 
 script_callbacks.on_ui_tabs(on_ui_tabs)
