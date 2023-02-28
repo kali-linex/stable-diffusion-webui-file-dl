@@ -4,6 +4,7 @@ import gradio as gr
 import requests
 import subprocess
 import os
+import re
 import tqdm
 
 def locate_megacmd():
@@ -13,6 +14,7 @@ def locate_megacmd():
     return None
 
 mega_get = locate_megacmd()
+pixeldrain_regex = re.compile("(?:https?://)?pixeldrain.com/u/(\w+)")
 
 def download_mega(url, out_folder):
     if not mega_get:
@@ -20,17 +22,28 @@ def download_mega(url, out_folder):
     result = subprocess.run([mega_get, url, out_folder])
     if result.returncode != 0:
         return "Error while downloading, check console"
-    return "done"
+    return "Done"
+
+def direct_dl(url, out_file):
+    try:
+        r = requests.get(url, stream=True, timeout=10000)
+        with open(out_file, 'wb') as f:
+            for data in tqdm.tqdm(r.iter_content(1024)):
+                f.write(data)
+    except Exception as e:
+        return "Error. You might want to check console. Original exception: " + e
+    return "Done"
+
+def download_pixeldrain(id, out_file):
+    return direct_dl(f'https://pixeldrain.com/api/file/{id}', out_file)
 
 def download_file(url, out_file):
     out_file = os.path.join(paths.models_path, out_file)
     if url.startswith('https://mega.nz'):
         return download_mega(url, out_file)
-    r = requests.get(url, stream=True, timeout=10000)
-    with open(out_file, 'wb') as f:
-        for data in tqdm.tqdm(r.iter_content(1024)):
-            f.write(data)
-    return "done"
+    if m := pixeldrain_regex.match(url):
+        return download_pixeldrain(m.group(1), out_file)
+    return direct_dl(url, out_file)
 
 def on_ui_tabs():
     with gr.Blocks(analytics_enabled=False) as downloader:
