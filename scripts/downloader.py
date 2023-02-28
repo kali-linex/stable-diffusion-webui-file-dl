@@ -34,10 +34,10 @@ def download_file(url, out_file):
 
 def on_ui_tabs():
     with gr.Blocks(analytics_enabled=False) as downloader:
-        url = gr.Textbox("URL")
-        out_file = gr.Textbox("Output file/folder if MEGA, based on models directory")
+        url = gr.Textbox(placeholder="Link to the file", label="URL")
+        out_file = gr.Textbox(placeholder="Output file name (folder name if the link is MEGA), relative to the models/ directory", label="Output")
         download = gr.Button("Download")
-        done = gr.Text()
+        done = gr.Text(label="Messages")
         
         download.click(download_file, inputs=[url, out_file], outputs=[done])
     return (downloader, "Downloader", "downloader"),
