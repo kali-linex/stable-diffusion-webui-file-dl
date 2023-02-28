@@ -16,17 +16,18 @@ mega_get = locate_megacmd()
 
 def download_mega(url, out_folder):
     if not mega_get:
-        return "MEGAcmd not installed, can't download MEGA links"
+        return "MEGAcmd not installed, can't download MEGA links. See https://mega.io/cmd for installation. Alternatively, I'll attempt to include an automagical installation soon™"
     result = subprocess.run([mega_get, url, out_folder])
     if result.returncode != 0:
         return "Error while downloading, check console"
     return "done"
 
 def download_file(url, out_file):
+    out_file = os.path.join(paths.models_path, out_file)
     if url.startswith('https://mega.nz'):
         return download_mega(url, out_file)
     r = requests.get(url, stream=True, timeout=10000)
-    with open(os.path.join(paths.models_path, out_file), 'wb') as f:
+    with open(out_file, 'wb') as f:
         for data in tqdm.tqdm(r.iter_content(1024)):
             f.write(data)
     return "done"
