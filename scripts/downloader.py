@@ -8,16 +8,19 @@ import re
 import tqdm
 from PIL import Image
 
+
 def locate_megacmd():
     for i in ["megacmd/usr/bin/mega-get", "/usr/bin/mega-get"]:
         if os.path.exists(i):
             return i
     return None
 
+
 mega_get = locate_megacmd()
 pixeldrain_regex = re.compile("(?:https?://)?pixeldrain.com/u/(\w+)")
 cont_disp_regex = re.compile('attachment; filename=(.+)')
 civitai_regex = re.compile("(?:https?://)?civitai.com/models/(\d+)(?:/.*)?")
+
 
 def download_mega(url, out_folder):
     if not mega_get:
@@ -49,16 +52,18 @@ def direct_dl(url, out_file, create_parent_dirs):
         return "Error. You might want to check console. Original exception: " + e
     return f'Done, downloaded to {out_file}'
 
-def download_pixeldrain(id, out_file):
-    return direct_dl(f'https://pixeldrain.com/api/file/{id}?download', out_file)
 
-def download_file(url, out_file):
+def download_pixeldrain(id, out_file, create_parent_dirs):
+    return direct_dl(f'https://pixeldrain.com/api/file/{id}?download', out_file, create_parent_dirs)
+
+
+def download_file(url, out_file, create_parent_dirs):
     out_file = os.path.join(paths.models_path, out_file)
     if url.startswith('https://mega.nz'):
         return download_mega(url, out_file)
     if m := pixeldrain_regex.match(url):
-        return download_pixeldrain(m.group(1), out_file)
-    return direct_dl(url, out_file)
+        return download_pixeldrain(m.group(1), out_file, create_parent_dirs)
+    return direct_dl(url, out_file, create_parent_dirs)
 
 
 def civitai_get_human_model_list(model_versions):
@@ -85,6 +90,7 @@ def civitai_fetch_models(model_list, url):
 
     return (f'Fetched {r["name"]}', state, gr.update(choices=choices), None)
 
+
 def on_ui_tabs():
     with gr.Blocks(analytics_enabled=False) as downloader:
         create_parent_dirs = gr.Checkbox(
@@ -100,7 +106,7 @@ def on_ui_tabs():
             done = gr.Text(label="Messages").style(container=False)
 
             download.click(download_file, inputs=[
-                           url, out_file], outputs=[done])
+                           url, out_file, create_parent_dirs], outputs=[done])
         with gr.Tab("Civitai"):
             with gr.Row():
                 with gr.Column():
@@ -124,5 +130,6 @@ def on_ui_tabs():
             civitai_download.click(lambda out, choice, state, create_dirs: direct_dl(state[choice]['downloadUrl'], os.path.join(
                 paths.models_path, out), create_dirs), inputs=[civitai_out_file, model_list, saved_resp, create_parent_dirs], outputs=[civitai_messages])
     return (downloader, "Downloader", "downloader"),
+
 
 script_callbacks.on_ui_tabs(on_ui_tabs)
